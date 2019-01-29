@@ -1,19 +1,18 @@
 ---
 title: "Leaflet Demo Full - GIS 715"
-knit: (function(input_file, encoding) {
-  out_dir <- 'docs';
-  rmarkdown::render(input_file,
- encoding=encoding,
- output_file=file.path(dirname(input_file), out_dir, 'index.html'))})
 author: "G.C. Millar"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
+knit: (function(input_file, encoding) {
+  out_dir <- '';
+  rmarkdown::render(input_file,
+  encoding=encoding,
+  output_file=file.path(dirname(input_file), out_dir,
+  'index.html'))})
 output:
   html_document:
     toc: yes
   pdf_document:
     toc: yes
-always_allow_html: yes    
-runtime: shiny
+always_allow_html: yes   
 ---
 # INTRODUCTION
   __Note__: A portion of the explanations & examples pulled from: [R Studio](https://rstudio.github.io/leaflet/)
@@ -547,7 +546,7 @@ server <- function(input, output, session) {
 }
 ```
 
-When using Shiny, you should always reserve the following as the final print / call statement. It has been commented out to allow printing to pdf:
-```{r Mexico Choropleth w/ Charts 4, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2}
-shinyApp(ui, server)
+When using Shiny, you should always reserve the following as the final print / call statement. It has been commented out since it requires constant connection to server:
+```{r Mexico Choropleth w/ Charts 4, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2}
+# shinyApp(ui, server)
 ```
