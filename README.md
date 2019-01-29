@@ -1,6 +1,6 @@
 ---
-title: "Leaflet Demo Full - GIS 715"
-author: "G.C. Millar" 
+# _Leaflet Demo Full - GIS 715_
+## Author: "G.C. Millar" 
 ---
 
 # INTRODUCTION
