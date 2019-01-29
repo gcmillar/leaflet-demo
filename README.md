@@ -1,5 +1,5 @@
 ---
-# _Leaflet Demo Full - GIS 715_
+# __Leaflet Demo Full - GIS 715__
 ### Author: G.C. Millar
 ---
 
