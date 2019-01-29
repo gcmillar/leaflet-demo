@@ -7,13 +7,34 @@ knit: (function(input_file, encoding) {
   encoding=encoding,
   output_file=file.path(dirname(input_file), out_dir,
   'index.html'))})
+navbar:
+title: "Leaflet Demo"
+  left:
+  - text: "INTRODUCTION"
+   href: 'https://gcmillar.github.io/leaflet-demo/#introduction'
+  - text: "THE MAP WIDGET"
+   href: 'https://gcmillar.github.io/leaflet-demo/#the-map-widget'
+  - text: "USING BASEMAPS"
+   href: 'https://gcmillar.github.io/leaflet-demo/#using-basemaps'
+  - text: "MARKERS"
+   href: 'https://gcmillar.github.io/leaflet-demo/#markers'
+  - text: "GEOJSON & TOPOJSON"
+   href: 'https://gcmillar.github.io/leaflet-demo/#geojson-topojson'
+  - text: "RASTER IMAGES"
+   href: 'https://gcmillar.github.io/leaflet-demo/#raster-images'
+  - text: "CUSTOM MAP TILES"
+   href: 'https://gcmillar.github.io/leaflet-demo/#custom-map-tiles'
+  - text: "INTEGRATION WITH SHINY"
+   href: 'https://gcmillar.github.io/leaflet-demo/#integration-with-shiny'      
 output:
   html_document:
     toc: yes
+    theme: cosmo
   pdf_document:
     toc: yes
 always_allow_html: yes   
 ---
+
 # INTRODUCTION
   __Note__: A portion of the explanations & examples pulled from: [R Studio](https://rstudio.github.io/leaflet/)
 
