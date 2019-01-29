@@ -1,0 +1,548 @@
+---
+title: "Leaflet Demo Full - GIS 715"
+author: "G.C. Millar"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: yes
+  pdf_document:
+    toc: yes
+always_allow_html: yes    
+runtime: shiny
+---
+# INTRODUCTION
+  __Note__: A portion of the explanations & examples pulled from: [R Studio](https://rstudio.github.io/leaflet/)
+
+Leaflet is one of the most popular open-source JavaScript libraries for interactive maps. Its used by websites ranging from The New York Times and The Washington Post to GitHub and Flickr, as well as GIS specialists like OpenStreetMap, Mapbox, and CartoDB.
+
+Overall, this R package makes it easy to integrate and control Leaflet maps in R.
+
+
+### Leaflet Features:
+  * Interactive panning/zooming
+  * Compose maps using arbitrary combinations of:
+    + Map tiles
+    + Markers
+    + Polygons
+    + Lines
+    + GeoJSON
+  * Create maps right from the R console or RStudio
+  * Embed maps in knitr/R Markdown documents and Shiny apps
+  * Easily render spatial objects from the sp or sf packages, or data frames with latitude/longitude columns
+  * Use map bounds and mouse events to drive Shiny logic
+  * Display maps in non spherical mercator projections
+  * Augment map features using chosen plugins from leaflet plugins repository
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Installation
+To install this R package, run this command at your R prompt:
+`if (!require(leaflet)) {`
+  `install.packages("leaflet")`
+  `library(leaflet)`
+`}`
+```{r INSTALLATION, tidy=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+if (!require(leaflet)) {
+  install.packages("leaflet")
+  library(leaflet)
+}
+```
+
+> ** If you are having issues downloading the leaflet package, it may be worth trying toinstall the development version from Github, run: `devtools::install_github("rstudio/leaflet")`.
+Once installed, you can use this package at the R console, within R Markdown documents, and within Shiny applications.  
+  
+  
+Then, do the same for all of the other packages that will be required from this demo:
+```{r libraries, tidy=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+if (!require(Rcpp)) {
+  install.packages("Rcpp")
+  library(Rcpp)
+}
+if (!require(devtools)) {
+  install.packages("devtools")
+  library(devtools)
+}
+if (!require(maps)) {
+  install.packages("maps")
+  library(maps)
+}
+if (!require(curl)) {
+  install.packages("curl")
+  library(curl)
+}
+if (!require(jsonlite)) {
+  install.packages("jsonlite")
+  library(jsonlite)
+}
+if (!require(readr)) {
+  install.packages("readr")
+  library(readr)
+}
+if (!require(data.table)) {
+  install.packages("data.table")
+  library(data.table)
+}
+if (!require(sp)) {
+  install.packages("sp")
+  library(sp)
+}
+if (!require(OpenStreetMap)) {
+  install.packages("OpenStreetMap")
+  library(OpenStreetMap)
+}
+if (!require(dygraphs)) {
+  install.packages("dygraphs")
+  library(dygraphs)
+}
+if (!require(dplyr)) {
+  install.packages("dplyr")
+  library(dplyr)
+}
+if (!require(rgdal)) {
+  install.packages("rgdal")
+  library(rgdal)
+}
+if (!require(dygraphs)) {
+  install.packages("dygraphs")
+  library(dygraphs)
+}
+```
+
+## Basic Usage
+  You create a Leaflet map with these four basic steps:
+  
+  1. Create a map widget by calling leaflet().
+  2. Add layers (i.e., features) to the map by using layer functions (e.g. `addTiles`, `addMarkers`, `addPolygons`) to modify the map widget.
+  3. Repeat step 2 as desired.
+  4. Print the map widget to display it.
+  
+Here's a basic example:
+```{r basic example 1, tidy=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+library(leaflet)
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+```
+
+In case you're not familiar with the magrittr pipe operator (%>%), here is the equivalent without using pipes:
+```{r basic example 12, tidy=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+m <- leaflet()
+m <- addTiles(m)
+m <- addMarkers(m, lng=174.768, lat=-36.852, popup="The birthplace of R")
+m
+```
+
+# THE MAP WIDGET
+The function `leaflet()` returns a Leaflet map widget, which stores a list of objects that can be modified or updated later. Most functions in this package have an argument map as their first argument, which makes it easy to use the pipe operator `%>%` in the magrittr package, as you have seen from the example in the Introduction.
+
+## Initializing Options
+The map widget can be initialized with certain parameters. This is achieved by populating the options argument as shown below.
+
+### Set value for the minZoom and maxZoom settings.
+```{r minZoom and maxZoom settings, tidy=TRUE, message=FALSE, warning=FALSE, cache=TRUE}
+leaflet(options = leafletOptions(minZoom = 0, maxZoom = 18))
+```
+
+The `leafletOptions()` can be passed any option described in the leaflet reference document. Using the `leafletOptions()`, you can set a custom CRS and have your map displayed in a non spherical mercator projection as described in projections.
+
+## Map Methods
+You can manipulate the attributes of the map widget using a series of methods. Please see the help page
+`?setView` for details.
+
+  * `setView()` # sets the center of the map view and the zoom level;
+  * `fitBounds()` # fits the view into the rectangle `[lng1, lat1]` `[lng2, lat2]`;
+  * `clearBounds()` # clears the bound, so that the view will be automatically determined by the range of latitude/longitude data in the map layers if provided.
+
+## The Data Object
+Both leaflet() and the map layer functions have an optional data parameter that is designed to receive spatial data in one of several forms:
+
+  * From base R:
+    + lng/lat matrix
+    + data frame with lng/lat columns
+  * From the sp package:
+    + SpatialPoints[DataFrame]
+    + Line/Lines
+    + SpatialLines[DataFrame]
+    + Polygon/Polygons
+    + SpatialPolygons[DataFrame]
+  * From the maps package:
+    + the data frame from returned from map()
+
+The data argument is used to derive spatial data for functions that need it; for example, if data is a SpatialPolygonsDataFrame object, then calling addPolygons on that map widget will know to add the polygons from that SpatialPolygonsDataFrame.
+
+It is straightforward to derive these variables from sp objects since they always represent spatial data in the same way. On the other hand, for a normal matrix or data frame, any numeric column could potentially contain spatial data. So we resort to guessing based on column names:
+
+  * the latitude variable is guessed by looking for columns named lat or latitude (case-insensitive)
+  * the longitude variable is guessed by looking for lng, long, or longitude
+
+You can always explicitly identify latitude/longitude columns by providing lng and lat arguments to the layer function.
+
+For example, we do not specify the values for the arguments `lat` and `lng` in `addCircles()` below, but the columns Lat and Long in the data frame df will be automatically used:
+```{r latitude/longitude columns, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+# add some circles to a map
+df = data.frame(Lat = 1:10, Long = rnorm(10))
+leaflet(df) %>% addCircles()
+```
+
+You can also explicitly specify the Lat and Long columns (see below for more info on the ~ syntax):
+```{r latitude/longitude columns 2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+leaflet(df) %>% addCircles(lng = ~Long, lat = ~Lat)
+
+library(maps)
+mapStates = map("state", fill = TRUE, plot = FALSE)
+leaflet(data = mapStates) %>% addTiles() %>%
+  addPolygons(fillColor = topo.colors(10, alpha = NULL), stroke = FALSE)
+```
+
+# USING BASEMAPS
+Leaflet supports basemaps using map tiles, popularized by Google Maps and now used by nearly all interactive web maps.
+
+## Default (OpenStreetMap) Tiles
+The easiest way to add tiles is by calling `addTiles()` with no arguments; by default, OpenStreetMap tiles are used.
+```{r Default (OpenStreetMap) Tiles, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+m <- leaflet() %>% setView(lng = -71.0589, lat = 42.3601, zoom = 12)
+m %>% addTiles()
+```
+
+## 3rd Party Tiles
+Alternatively, many popular free third-party basemaps can be added using the addProviderTiles() function, which is implemented using the leaflet-providers plugin. See here for the complete set.
+
+As a convenience, leaflet also provides a named list of all the third-party tile providers that are supported by the plugin. This enables you to use auto-completion feature of your favorite R IDE (like RStudio) and not have to remember or look up supported tile providers; just type providers$ and choose from one of the options. You can also use names(providers) to view all of the options.
+```{r 3rd Party Tiles, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+m %>% addProviderTiles(providers$Stamen.Toner)
+```
+
+# MARKERS
+Icon markers are added using the addMarkers or the addAwesomeMarkers functions. Their default appearance is a dropped pin. As with most layer functions, the popup argument can be used to add a message to be displayed on click, and the label option can be used to display a text label either on hover or statically.
+```{r Markers, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+data(quakes)
+```
+
+Show first 20 rows from the `quakes` dataset:
+```{r Markers 2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+leaflet(data = quakes[1:20,]) %>% addTiles() %>%
+  addMarkers(~long, ~lat, popup = ~as.character(mag), label = ~as.character(mag))
+```
+
+## Customizing Marker Icons
+You can provide custom markers in one of several ways, depending on the scenario. For each of these ways, the icon can be provided as either a URL or as a file path.
+
+For the simple case of applying a single icon to a set of markers, use `makeIcon()`.
+```{r Markers 3, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+greenLeafIcon <- makeIcon(
+  iconUrl = "https://leafletjs.com/examples/custom-icons/leaf-green.png",
+  iconWidth = 38, iconHeight = 95,
+  iconAnchorX = 22, iconAnchorY = 94,
+  shadowUrl = "https://leafletjs.com/examples/custom-icons/leaf-shadow.png",
+  shadowWidth = 50, shadowHeight = 64,
+  shadowAnchorX = 4, shadowAnchorY = 62
+)
+
+leaflet(data = quakes[1:4,]) %>% addTiles() %>%
+  addMarkers(~long, ~lat, icon = greenLeafIcon)
+```
+
+> ** If the custom icons are not displaying in your viewer, click the "Show in new window" button to open it in your web browser. They should correctly display then.
+
+If you have several icons to apply that vary only by a couple of parameters (i.e. they share the same size and anchor points but have different URLs), use the `icons()` function. `icons()` performs similarly to `data.frame()`, in that any arguments that are shorter than the number of markers will be recycled to fit.
+```{r icons(), tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+quakes1 <- quakes[1:10,]
+```
+
+Example of complete customization of markers (naval battle between Dr. Josh Gray & Hadley Wickham for the rights to the land of spatial R.)
+```{r custom icons (R naval battle), tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.width=3, fig.height=2, cache=TRUE}
+leafIcons <- icons(
+  iconUrl = ifelse(quakes1$mag < 4.6,
+                   "https://cnr.ncsu.edu/geospatial/wp-content/uploads/sites/12/2017/06/Josh_Gray-400x400.jpg",
+                   "https://pbs.twimg.com/profile_images/905186381995147264/7zKAG5sY.jpg"
+  ),
+  iconWidth = 38, iconHeight = 38,
+  iconAnchorX = 22, iconAnchorY = 94
+  # shadowUrl = "http://leafletjs.com/examples/custom-icons/leaf-shadow.png",
+  # shadowWidth = 50, shadowHeight = 64,
+  # shadowAnchorX = 4, shadowAnchorY = 62
+)
+
+leaflet(data = quakes1) %>% addTiles() %>%
+  addMarkers(~long, ~lat, icon = leafIcons)
+```
+
+Finally, if you have a set of icons that vary in multiple parameters, it may be more convenient to use the `iconList()` function. It lets you create a list of (named or unnamed) `makeIcon()` icons, and select from that list by position or name.
+
+# GEOJSON & TOPOJSON  
+```{r geojson package, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+if (!require(geojsonio)) {
+  install.packages("geojsonio")
+  library(geojsonio)
+}
+```
+
+## addGeoJSONv2
+```{r addGeoJSONv2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+nycounties <- geojsonio::geojson_read("https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/new-york-counties.geojson", what = "sp")
+
+pal <- colorFactor("viridis", NULL)
+
+leaflet::leaflet(nycounties) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+              fillColor = ~pal(nycounties$geoid),
+              label = ~paste0(nycounties$name, ": ", formatC(nycounties$name, 
+                                                             big.mark = ",")))
+```
+
+### Leaflet.extras
+```{r leaflet.extras install, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+if (!require(leaflet.extras)) {
+  install.packages("leaflet.extras")
+  library(leaflet.extras)
+}
+```
+
+## addGPX
+```{r addGPX, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+airports <- readr::read_file(
+  system.file("examples/data/gpx/md-airports.gpx.zip", package = "leaflet.extras")
+)
+leaflet() %>%
+  addBootstrapDependency() %>%
+  setView(-76.6413, 39.0458, 8) %>%
+  addProviderTiles(
+    providers$CartoDB.Positron,
+    options = providerTileOptions(detectRetina = TRUE)
+  ) %>%
+  addWebGLGPXHeatmap(airports, size = 20000, group = "airports", opacity = 0.9) %>%
+  addGPX(
+    airports,
+    markerType = "circleMarker",
+    stroke = FALSE, fillColor = "black", fillOpacity = 1,
+    markerOptions = markerOptions(radius = 1.5),
+    group = "airports"
+  )
+```
+
+__* Note.__ The "unofficial" leaflet packages such as `leaflet.esri`, `leaflet.extras`, `leafletCN`, and `leafletR`, can occasionally be combative with the main `leaflet` package and its associated functions. So, it can be helpful, and definitely headache-preventing, to detach an unofficial leaflet package whenever it is done being called to prevent potential fights betwen the leaflet package family:
+```{r detach leaflet packages, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, fig.width=3, dpi=300, fig.height=2, cache=TRUE}
+detach(package:leaflet.extras, unload = TRUE)
+```
+
+# RASTER IMAGES 
+```{r RASTER - library install, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+if (!require(raster)) {
+  install.packages("raster")
+  library(raster)
+}
+```
+
+```{r rasters, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+r <- raster(xmn = -2.8, xmx = -2.79, ymn = 54.04, ymx = 54.05, nrows = 30, ncols = 30)
+values(r) <- matrix(1:900, nrow(r), ncol(r), byrow = TRUE)
+crs(r) <- CRS("+init=epsg:4326")
+
+if (requireNamespace("rgdal")) {
+  leaflet() %>% addTiles() %>%
+    addRasterImage(r, colors = "Spectral", opacity = 0.8)
+}
+```
+
+
+# CUSTOM MAP TILES
+### G. Millar Research - Mapping Cyclists' Stress Levels to Inform Urban Planning
+First, get point data--cyclists' locational data collected in Netherlands on cycle highway:
+```{r get point data, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2,fig.width=3, cache=TRUE}
+Nl_cyc <- read.table("https://raw.githubusercontent.com/gcmillar/3D-Buildings-NL/master/Nl_cyc_random.csv", header = TRUE, row.names=NULL, sep=",")
+```
+
+Then, make data spatial (spatialpointsdataframe):
+```{r make data spatial, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
+setnames(Nl_cyc, "Longitude", "lon")
+setnames(Nl_cyc, "Latitude", "lat")
+coordinates(Nl_cyc) <-  ~ lon + lat
+proj4string(Nl_cyc) <- CRS('+proj=longlat +datum=WGS84')
+```
+
+## Calling on Custom Map Tiles with URLs
+Custom map tiles can be called on using external urls. The example below uses a 3rd-party tile provider called [Thunderforest](https://www.thunderforest.com/). It is a very similar provider to [OpenStreetMap](https://www.openstreetmap.org), it just offers a different range of tile styles. Usually when this approach is taken, you need to insert your API key within the link that is called on for grabbing the tile's style (_at very end of url_): `"apikey=f402a17480854b188376a96ff65cb87f"`
+
+** &uparrow; _That is my API key for Thunderforest._ &uparrow; **
+
+Feel free to use it for today as I will be sure to change it when done with the demo. It is very simple to obtain your own from Thunderforest and other map tile providers such as Mapbox. It usually only requires you to sign up (for free) and register your email address. If you plan on making a good deal of maps in the next 3-4 years. I would highly suggest doing this and really learning how you can access different tile styles from multiple providers. Better yet, if you could learn to customize your own tiles and use them in the maps you design and create, the cartographic world is yours.
+```{r CREATE CUSTOM MAP TILES, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.width=3, fig.height=2, cache=TRUE}
+library(leaflet)
+OpenCycleMap = "https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=f402a17480854b188376a96ff65cb87f"
+Transport = "https://tile.thunderforest.com/transport/{z}/{x}/{y}.png?apikey=f402a17480854b188376a96ff65cb87f"
+Landscape = "https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=f402a17480854b188376a96ff65cb87f"
+Transport.Dark = "https://tile.thunderforest.com/transport-dark/{z}/{x}/{y}.png?apikey=f402a17480854b188376a96ff65cb87f"
+```
+
+Setting color palette for cyclists' points that will be mapped and colored by elevation at each location (red = high; blue = low).
+```{r custom color pal, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+conduct.pal <- colorNumeric (c("dodgerblue4", "slategray2", "red3"), 
+                             Nl_cyc$Elevation)
+```
+
+And finally, call custom map tiles and insert them into your leaflet map as toggable layers.
+```{r Call custom map tiles & setup as toggable layers, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", fig.width=3, warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+m <- leaflet() %>%
+  addTiles(urlTemplate = Landscape, group = "Landscape") %>%
+  addTiles(urlTemplate = OpenCycleMap, group = "Open Cycle Map") %>%
+  addProviderTiles("Esri.WorldTopoMap", group = "Topographical") %>%
+  addProviderTiles("OpenStreetMap.Mapnik", group = "Road map") %>%
+  addProviderTiles("Esri.WorldImagery", group = "Satellite") %>%
+  addTiles(urlTemplate = Transport, group = "Transport") %>%
+  addTiles(urlTemplate = Transport.Dark, group = "Transport Dark") %>%
+  addCircles (data = Nl_cyc, group='Participant 1', stroke = T, radius = 80, 
+              fillOpacity = 0.2, fillColor = conduct.pal(Nl_cyc$Elevation),
+              opacity = 0.2, color = conduct.pal(Nl_cyc$Elevation)) %>%
+  # Layers control
+  addLayersControl(position = 'bottomright', 
+                   baseGroups = c("Landscape", "Open Cycle Map", "Topographical", 
+                                  "Road map", "Satellite","Transport",  
+                                  "Transport Dark"), 
+                   overlayGroups = c("Participant 1"),
+                   options = layersControlOptions(collapsed = FALSE)) %>%
+  addLegend(values = Nl_cyc$Elevation, pal = conduct.pal, 
+            opacity = 1, title = "Elevation", position = "bottomleft")
+m    
+```
+
+
+# INTEGRATION WITH SHINY 
+## Mexico Choropleth with Dynamic Charts
+```{r INTEGRATION WITH SHINY, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+library(shiny)
+library(leaflet)
+library(dygraphs)
+library(dplyr)
+library(rgdal)
+```
+
+Let's build our data directory in advance so we don't have to download the data every time.
+```{r Mexico Choropleth w/ Charts, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+tmp <- tempdir()
+url <- "http://personal.tcu.edu/kylewalker/data/mexico.zip"
+file <- basename(url)
+download.file(url, file)
+unzip(file, exdir = tmp)
+mexico <- {
+  on.exit({unlink(tmp);unlink(file)}) #delete our files since no longer need
+  readOGR(dsn = tmp, layer = "mexico", encoding = "UTF-8")
+}
+```
+
+Now let's get our time series data from Diego Valle.
+```{r Mexico Choropleth w/ Charts 2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+crime_mexico <- jsonlite::fromJSON(
+  "https://rawgit.com/diegovalle/crimenmexico.diegovalle.net/master/assets/json/states.json"
+)
+```
+
+Instead of the GDP data, let's use mean `homicide_rate` for our choropleth.
+```{r Mexico Choropleth w/ Charts 3, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
+mexico$homicide <- crime_mexico$hd %>%
+  group_by( state_code ) %>%
+  summarise( homicide = mean(rate) ) %>%
+  ungroup() %>%
+  dplyr::select( homicide ) %>%
+  unlist
+
+pal <- colorBin(
+  palette = RColorBrewer::brewer.pal(n = 9, "YlGn")[-(1:2)], 
+  domain = c(0, 50), bins =7)
+
+popup <- paste0("<strong>Estado: </strong>", 
+                mexico$name, "<br><strong>Homicide Rate: </strong>", 
+                round(mexico$homicide, 2))
+
+leaf_mexico <- leaflet(data = mexico) %>%
+  addTiles() %>%
+  addPolygons(fillColor = ~pal(homicide), 
+              fillOpacity = 0.8, color = "#BDBDC3", weight = 1,
+              layerId = ~id, popup = popup)
+
+ui <- fluidPage(
+  leafletOutput("map1"), dygraphOutput("dygraph1",height = 200), 
+  textOutput("message", container = h3)
+)
+
+server <- function(input, output, session) {
+  v <- reactiveValues(msg = "")
+  
+  output$map1 <- renderLeaflet({
+    leaf_mexico
+  })
+  
+  output$dygraph1 <- renderDygraph({
+    # start dygraph with all the states
+    crime_wide <- reshape(
+      crime_mexico$hd[,c("date","rate","state_code"),drop=F],
+      v.names="rate",
+      idvar = "date",
+      timevar="state_code",
+      direction="wide"
+    )
+    colnames(crime_wide) <- c("date",as.character(mexico$state))
+    rownames(crime_wide) <- as.Date(crime_wide$date)
+    dygraph( crime_wide[,-1])  %>%
+      dyLegend( show = "never" )
+  })
+  
+  observeEvent(input$dygraph1_date_window, {
+    if(!is.null(input$dygraph1_date_window)){
+      # get the new mean based on the range selected by dygraph
+      mexico$filtered_rate <- crime_mexico$hd %>%
+        filter( 
+          as.Date(date) >= as.Date(input$dygraph1_date_window[[1]]),
+          as.Date(date) <= as.Date(input$dygraph1_date_window[[2]])  
+        ) %>%
+        group_by( state_code ) %>%
+        summarise( homicide = mean(rate) ) %>%
+        ungroup() %>%
+        dplyr::select( homicide ) %>%
+        unlist
+      
+      # leaflet comes with this nice feature leafletProxy
+      #  to avoid rebuilding the whole map
+      #  let's use it
+      leafletProxy( "map1", data = mexico  ) %>%
+        removeShape( layerId = ~id ) %>%
+        addPolygons( fillColor = ~pal( filtered_rate ), 
+                     fillOpacity = 0.8, 
+                     color = "#BDBDC3", 
+                     weight = 1,
+                     layerId = ~id,
+                     popup = paste0("<strong>Estado: </strong>", 
+                                    mexico$name, 
+                                    "<br><strong>Homicide Rate: </strong>", 
+                                    round(mexico$filtered_rate,2)
+                     )
+        )
+    }
+  })
+  
+  observeEvent(input$map1_shape_click, {
+    v$msg <- paste("Clicked shape", input$map1_shape_click$id)
+    #  on our click let's update the dygraph to only show
+    #    the time series for the clicked
+    state_crime_data <- subset(crime_mexico$hd,state_code == input$map1_shape_click$id)
+    rownames(state_crime_data) <- as.Date(state_crime_data$date)
+    output$dygraph1 <- renderDygraph({
+      dygraph(
+        xts::as.xts(state_crime_data[,"rate",drop=F]),
+        ylab = paste0(
+          "homicide rate ",
+          as.character(mexico$state[input$map1_shape_click$id])
+        )
+      )
+    })
+  })
+}
+```
+
+When using Shiny, you should always reserve the following as the final print / call statement. It has been commented out to allow printing to pdf:
+```{r Mexico Choropleth w/ Charts 4, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2}
+shinyApp(ui, server)
+```
