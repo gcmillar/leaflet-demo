@@ -26,10 +26,6 @@ Overall, this R package makes it easy to integrate and control Leaflet maps in R
   * Display maps in non spherical mercator projections
   * Augment map features using chosen plugins from leaflet plugins repository
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Installation
 To install this R package, run this command at your R prompt:
 `if (!require(leaflet)) {`
@@ -139,6 +135,7 @@ The map widget can be initialized with certain parameters. This is achieved by p
 leaflet(options = leafletOptions(minZoom = 0, maxZoom = 18))
 ```
 
+
 The `leafletOptions()` can be passed any option described in the leaflet reference document. Using the `leafletOptions()`, you can set a custom CRS and have your map displayed in a non spherical mercator projection as described in projections.
 
 ## Map Methods
@@ -180,20 +177,25 @@ df = data.frame(Lat = 1:10, Long = rnorm(10))
 leaflet(df) %>% addCircles()
 ```
 
+
 You can also explicitly specify the Lat and Long columns (see below for more info on the ~ syntax):
+
 ```{r latitude/longitude columns 2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 leaflet(df) %>% addCircles(lng = ~Long, lat = ~Lat)
+
 library(maps)
 mapStates = map("state", fill = TRUE, plot = FALSE)
 leaflet(data = mapStates) %>% addTiles() %>%
   addPolygons(fillColor = topo.colors(10, alpha = NULL), stroke = FALSE)
 ```
 
+
 # USING BASEMAPS
 Leaflet supports basemaps using map tiles, popularized by Google Maps and now used by nearly all interactive web maps.
 
 ## Default (OpenStreetMap) Tiles
 The easiest way to add tiles is by calling `addTiles()` with no arguments; by default, OpenStreetMap tiles are used.
+
 ```{r Default (OpenStreetMap) Tiles, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 m <- leaflet() %>% setView(lng = -71.0589, lat = 42.3601, zoom = 12)
 m %>% addTiles()
@@ -203,6 +205,7 @@ m %>% addTiles()
 Alternatively, many popular free third-party basemaps can be added using the addProviderTiles() function, which is implemented using the leaflet-providers plugin. See here for the complete set.
 
 As a convenience, leaflet also provides a named list of all the third-party tile providers that are supported by the plugin. This enables you to use auto-completion feature of your favorite R IDE (like RStudio) and not have to remember or look up supported tile providers; just type providers$ and choose from one of the options. You can also use names(providers) to view all of the options.
+
 ```{r 3rd Party Tiles, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 m %>% addProviderTiles(providers$Stamen.Toner)
 ```
@@ -214,6 +217,7 @@ data(quakes)
 ```
 
 Show first 20 rows from the `quakes` dataset:
+
 ```{r Markers 2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 leaflet(data = quakes[1:20,]) %>% addTiles() %>%
   addMarkers(~long, ~lat, popup = ~as.character(mag), label = ~as.character(mag))
@@ -223,6 +227,7 @@ leaflet(data = quakes[1:20,]) %>% addTiles() %>%
 You can provide custom markers in one of several ways, depending on the scenario. For each of these ways, the icon can be provided as either a URL or as a file path.
 
 For the simple case of applying a single icon to a set of markers, use `makeIcon()`.
+
 ```{r Markers 3, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 greenLeafIcon <- makeIcon(
   iconUrl = "https://leafletjs.com/examples/custom-icons/leaf-green.png",
@@ -232,17 +237,20 @@ greenLeafIcon <- makeIcon(
   shadowWidth = 50, shadowHeight = 64,
   shadowAnchorX = 4, shadowAnchorY = 62
 )
+
 leaflet(data = quakes[1:4,]) %>% addTiles() %>%
   addMarkers(~long, ~lat, icon = greenLeafIcon)
 ```
 
 > ** If the custom icons are not displaying in your viewer, click the "Show in new window" button to open it in your web browser. They should correctly display then.
+
 If you have several icons to apply that vary only by a couple of parameters (i.e. they share the same size and anchor points but have different URLs), use the `icons()` function. `icons()` performs similarly to `data.frame()`, in that any arguments that are shorter than the number of markers will be recycled to fit.
 ```{r icons(), tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 quakes1 <- quakes[1:10,]
 ```
 
 Example of complete customization of markers (naval battle between Dr. Josh Gray & Hadley Wickham for the rights to the land of spatial R.)
+
 ```{r custom icons (R naval battle), tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.width=3, fig.height=2, cache=TRUE}
 leafIcons <- icons(
   iconUrl = ifelse(quakes1$mag < 4.6,
@@ -255,9 +263,11 @@ leafIcons <- icons(
   # shadowWidth = 50, shadowHeight = 64,
   # shadowAnchorX = 4, shadowAnchorY = 62
 )
+
 leaflet(data = quakes1) %>% addTiles() %>%
   addMarkers(~long, ~lat, icon = leafIcons)
 ```
+
 
 Finally, if you have a set of icons that vary in multiple parameters, it may be more convenient to use the `iconList()` function. It lets you create a list of (named or unnamed) `makeIcon()` icons, and select from that list by position or name.
 
@@ -272,7 +282,9 @@ if (!require(geojsonio)) {
 ## addGeoJSONv2
 ```{r addGeoJSONv2, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 nycounties <- geojsonio::geojson_read("https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/new-york-counties.geojson", what = "sp")
+
 pal <- colorFactor("viridis", NULL)
+
 leaflet::leaflet(nycounties) %>%
   addTiles() %>%
   addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
@@ -311,28 +323,35 @@ leaflet() %>%
   )
 ```
 
+
 __* Note.__ The "unofficial" leaflet packages such as `leaflet.esri`, `leaflet.extras`, `leafletCN`, and `leafletR`, can occasionally be combative with the main `leaflet` package and its associated functions. So, it can be helpful, and definitely headache-preventing, to detach an unofficial leaflet package whenever it is done being called to prevent potential fights betwen the leaflet package family:
 ```{r detach leaflet packages, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, fig.width=3, dpi=300, fig.height=2, cache=TRUE}
 detach(package:leaflet.extras, unload = TRUE)
 ```
 
 # RASTER IMAGES 
-```{r RASTER - library install, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
-if (!require(raster)) {
-  install.packages("raster")
-  library(raster)
-}
-```
+Two-dimensional RasterLayer objects (from the raster package) can be turned into images and added to Leaflet maps using the `addRasterImage` function.
 
+## Large Raster Warning
+Because the `addRasterImage` function embeds the image in the map widget, it will increase the size of the generated HTML proportionally. If you have a large raster layer, you can provide a larger number of bytes and see how it goes, or use `raster::resample` or `raster::aggregate` to decrease the number of cells.
+
+## Coloring
+In order to render the RasterLayer as an image, each cell value must be converted to an RGB(A) color. You can specify the color scale using the colors argument, which accepts a variety of color specifications:
+
+The name of a Color Brewer 2 palette. If no colors argument is provided, then  "Spectral" is the default. A vector that represents the ordered list of colors to map to the data. Any color specification that is accepted by `grDevices::col2rgb` can be used, including  "#RRGGBB" and "#RRGGBBAA" forms. Example:  `colors = c("#E0F3DB", "#A8DDB5", "#43A2CA")`.
+
+I've created a colorful raster overlaid on a base map for you to get a general sense of how the coloring operations function:
 ```{r rasters, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, fig.width=3, cache=TRUE}
 r <- raster(xmn = -2.8, xmx = -2.79, ymn = 54.04, ymx = 54.05, nrows = 30, ncols = 30)
 values(r) <- matrix(1:900, nrow(r), ncol(r), byrow = TRUE)
 crs(r) <- CRS("+init=epsg:4326")
+
 if (requireNamespace("rgdal")) {
   leaflet() %>% addTiles() %>%
     addRasterImage(r, colors = "Spectral", opacity = 0.8)
 }
 ```
+
 
 
 # CUSTOM MAP TILES
@@ -397,7 +416,49 @@ m
 
 
 # INTEGRATION WITH SHINY 
-## Mexico Choropleth with Dynamic Charts
+Shiny is a web framework for R. To learn more about Shiny, visit shiny.rstudio.com.
+
+The Leaflet package includes powerful and convenient features for integrating with Shiny applications.
+
+Most Shiny output widgets are incorporated into an app by including an output (e.g. `plotOutput`) for the widget in the UI definition, and using a render function (e.g. `renderPlot`) in the server function. Leaflet maps are no different; in the UI you call `leafletOutput`, and on the server side you assign a `renderLeaflet` call to the output. Inside the `renderLeaflet` expression, you return a Leaflet map object.
+
+## Inputs/Events
+Leaflet maps and objects send input values (which we’ll refer to as “events” in this document) to Shiny as the user interacts with them.
+
+## Object events
+Object event names generally use this pattern:
+`input$MAPID_OBJCATEGORY_EVENTNAME`
+
+So for a `leafletOutput("mymap")` had a circle on it, clicking on that circle would update the Shiny input at `input$mymap_shape_click`. (Note that the layer ID is not part of the name, though it is part of the value.)
+
+If no shape has ever been clicked on this map, then `input$mymap_shape_click` is null.
+
+Valid values for OBJCATEGORY above are marker, shape, geojson, and topojson. (Tiles and controls don’t raise mouse events.) Valid values for EVENTNAME are click, mouseover, and mouseout.
+
+All of these events are set to either NULL if the event has never happened, or a `list()` that includes:
+
+  * lat - The latitude of the object, if available; otherwise, the mouse cursor
+  * lng - The longitude of the object, if available; otherwise, the mouse cursor
+  * id - The layerId, if any
+  
+GeoJSON events also include additional properties:
+
+  * featureId - The feature ID, if any
+  * properties - The feature properties
+
+
+## Map events
+The map itself also has a few input values/events:
+
+  * `input$MAPID_click` is an event that is sent when the map background or basemap is clicked. The value is a list with lat and lng.
+
+  * `input$MAPID_bounds` provides the latitude/longitude bounds of the currently visible map area; the value is a `list()` that has named elements north, east, south, and west.
+
+  * `input$MAPID_zoom` is an integer that indicates the zoom level.
+
+  * `input$MAPID_center` provides the latitude/longtitude of the center of the currently visible map area; the value is a list() that has named elements lat and lng.
+
+## All Together Now: Mexico Choropleth with Dynamic Charts
 ```{r INTEGRATION WITH SHINY, tidy=TRUE, message=FALSE, fig.align='center', fig.cap="", warning=FALSE, dpi=300, fig.height=2, cache=TRUE}
 library(shiny)
 library(leaflet)
@@ -434,21 +495,26 @@ mexico$homicide <- crime_mexico$hd %>%
   ungroup() %>%
   dplyr::select( homicide ) %>%
   unlist
+
 pal <- colorBin(
   palette = RColorBrewer::brewer.pal(n = 9, "YlGn")[-(1:2)], 
   domain = c(0, 50), bins =7)
+
 popup <- paste0("<strong>Estado: </strong>", 
                 mexico$name, "<br><strong>Homicide Rate: </strong>", 
                 round(mexico$homicide, 2))
+
 leaf_mexico <- leaflet(data = mexico) %>%
   addTiles() %>%
   addPolygons(fillColor = ~pal(homicide), 
               fillOpacity = 0.8, color = "#BDBDC3", weight = 1,
               layerId = ~id, popup = popup)
+
 ui <- fluidPage(
   leafletOutput("map1"), dygraphOutput("dygraph1",height = 200), 
   textOutput("message", container = h3)
 )
+
 server <- function(input, output, session) {
   v <- reactiveValues(msg = "")
   
